@@ -10,8 +10,7 @@
 #define rc4decrypt(x,y)     rc4encrypt(x,y)
 
 struct s_arcfour { 
-    //
-    int x;
+    
 };
 typedef struct s_arcfour Arcfour;
 
