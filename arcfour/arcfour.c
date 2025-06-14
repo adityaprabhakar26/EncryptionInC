@@ -29,7 +29,7 @@ export Arcfour *rc4init(int8 *key, int16 size) {
         p->S[p->i] = p-> i;
     }
 
-    //look at the read me
+    //look at the read me i explain this there
     //the Key Scheduling section explains it with pseudocode
     for (p->i = 0; p->i < 256; p->i++){
         

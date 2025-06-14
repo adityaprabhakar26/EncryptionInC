@@ -41,11 +41,11 @@ int main() {
     int8 *encrypted, *decrypted;
 
     /* replace with key of 8 bits to 2048 bits */
-    key = "tomatoes"; 
+    key = "here's a key i should replace"; 
     skey = strlen(key);
 
     /* what we are encrypting */
-    from =  "Shall I compare thee to a summer's day?"; 
+    from =  "hello my name is aditya"; 
     stext = strlen(from);
 
     //encrypt
