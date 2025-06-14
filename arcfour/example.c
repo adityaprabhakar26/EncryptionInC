@@ -6,14 +6,12 @@
 
 int main(void);
 
-/* es31 cm63 <- this is how the output should look
+/* es31 cm63 <- output should look like something along these lines
 1 byte is represented by 2 hexadecimals, and then 2 bytes per group
 separated by spaces. this function will be our binary printer */
 
 void printbin(int8 *input, const int16 size) {
-    //iterator
     int16 i;
-    //pointer
     int8 *p;
 
     //assert checks if predicate is true, else holds program
@@ -35,16 +33,12 @@ void printbin(int8 *input, const int16 size) {
 
 int main() {
 
-    //Arcfour *rc4;
+    Arcfour *rc4;
 
     /* size key and size text */
     int16 skey, stext;
-    char *key, *from, *encrypted, *decrypted;
-
-    key = from = encrypted =decrypted = 0; 
-    from = key;
-    skey = stext = 0;
-
+    char *key, *from;
+    int8 *encrypted, *decrypted;
 
     /* replace with key of 8 bits to 2048 bits */
     key = "tomatoes"; 
@@ -54,14 +48,29 @@ int main() {
     from =  "Shall I compare thee to a summer's day?"; 
     stext = strlen(from);
 
-    printf("initializing encryption"); F;
-    //rc4 = rc4init(key,skey);
+    //encrypt
+    printf("initializing encryption..."); F;
+    rc4 = rc4init((int8 *)key,skey);
     printf("done\n");
 
     printf("'%s'\n ->",from);
-    //encrypted = rc4encrypt(from, stext);
+    encrypted = rc4encrypt(rc4,(int8 *)from, stext);
+    printbin(encrypted,stext);
+    
 
-    printbin((int8 *) key,skey);
+    //decrypt
+    rc4uninit(rc4);
+
+    printf("\ninitializing decryption..."); F;
+    rc4 = rc4init((int8 *)key,skey);
+    printf("done\n");
+    
+
+    decrypted = rc4decrypt(rc4, encrypted, stext);
+    printf("->'%s'\n",decrypted);
+
+    rc4uninit(rc4);
+    
     return 0;
 
 }

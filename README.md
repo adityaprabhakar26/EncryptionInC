@@ -11,6 +11,7 @@ Then we take some key, encode it(ASCII)
 Then we use a key array, T, of length 256.
 The inputs of this array are the encoding of the key, repated till the array is filled. For example if key = "HELLO", it would be encoded as
 72 69 76 76 79. So T[0] = 72, T[1] = 69 ... T[4] = 79, T[5] = 72 ... T[255] = 72
+The way I implemented this in this code, though, is just setting the key array to be the length of the key(so T would be length 5), and when I reference it, instead of my "i" being, say, 234, I would check 234 mod 5.
 
 Now comes Key Scheduling,
 j = 0
