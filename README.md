@@ -1,7 +1,7 @@
 here's a link to the wikipedia article on the stream cipher we will be using.
 https://en.wikipedia.org/wiki/RC4
 
-RC4 is a pretty simple stream cipher and was used a lot, but now considered not secure. A way to make it "secure"(enough for our purposes of learning how to build an encryption library from scratch + being able to encrypt files with it) is to have a massive key(randomized too) and also dispose of a lot of the initial output bytes.
+RC4 is a pretty simple stream cipher and was used a lot, but now it is considered not secure. A way to make it "secure"(enough for our purposes of learning how to build an encryption library from scratch + being able to encrypt files with it) is to have a massive key(randomized too) and also dispose of a lot of the initial output bytes.
 
 Here is a simple explanation of the cipher:
 
