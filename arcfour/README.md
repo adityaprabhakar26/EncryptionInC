@@ -1,3 +1,5 @@
+This README is for the encryption library in this folder. there will be another folder for the actual file encryptor/decryptor, that will have a README too.
+
 here's a link to the wikipedia article on the stream cipher we will be using.
 https://en.wikipedia.org/wiki/RC4
 
