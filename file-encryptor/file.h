@@ -14,9 +14,9 @@
 
 #define encryptfile(x,y,z,a,b)  \
     addheader(x,y,a,b);         \
-    decryptfile(x,y,z)
-#define min(x,y)                (y<x)?y:x;
-#define max(x,y)                (y>x)?y:x;
+    encrypt(x,y,z)
+#define min(x,y)  (y<x ? y:x)
+#define max(x,y)  (y>x ? y:x)
 #define true 1
 #define false 0
 
@@ -35,4 +35,4 @@ int8 *sha256(int8*,int16);
 void addheader(Arcfour*,int,int8*,int16);
 void padding(Arcfour*,int,int16);
 void keyhash(Arcfour*,int,int8*,int16);
-void decryptfile(Arcfour*,int,int);
+void encrypt(Arcfour*,int,int);

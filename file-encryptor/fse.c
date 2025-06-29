@@ -110,7 +110,7 @@ void wipe(int8 *buf, int16 size){
     //but we listen
     int16 n, i;
     int8 *p;
-    
+    n=20;
     //so basically 20 passes on each pass we go through each byte in buffer make it 0
     while (n--)
         for (i = size, p = buf; i; i--)
@@ -127,7 +127,7 @@ void changeecho(bool enabled) {
     tcgetattr(0,t);
     
     if (enabled) {
-        t->c_lflag != ECHO;
+        t->c_lflag |= ECHO;
     }else {
         t->c_lflag &= ~ECHO;
     }
@@ -175,7 +175,6 @@ int8 *readkey(const char *prompt){
     //but because strncpy is annoying about the possibility of having a longer source than destination
     //we need to do all this stuff to ignore the warnings
     #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wstringop-truncation"
         strncpy((char *)p, (char *)buf, size);
     #pragma GCC diagnostic pop
 
@@ -183,19 +182,123 @@ int8 *readkey(const char *prompt){
 }
 
 void keyhash(Arcfour *rc4, int fd, int8 *key, int16 size) {
+    int x;
+    int16 n;
+    int8 *p, *hash;
+    int8 buf[2];
+    int8 unencrypted, encrypted;
+    //so p is a pointer walking thru the hash
+    //and buf holds the encrypted byte before we write it
+    
+    //sha256 is 256 bits = 32 bytes
+    n=32;
+    *(buf+1)=0;
+    hash = sha256(key,size);
+    p = hash;
+
+    //basically for every byte of hash, we use p to iterate over the bytes
+    //so unencrypted is the byte of the hashed key
+    //we then encrypt it with our rc4 custom cipher
+    //store it in our buffer, then write it in
+    while(n--) {
+        unencrypted = *p++;
+        encrypted = unencrypted ^ rc4byte(rc4);
+        *buf = encrypted;
+        x = write(fd, (char *)buf, 1);
+        assert(x == 1);
+    }
+
+    free(hash);
+
     return;
+
 }
 
 void padding(Arcfour *rc4, int fd, int16 size) {
+    int8 unencrypted, encrypted;
+    int8 buf[2];
+    int8 *pad, *p;
+    int16 n;
+    int x;
+
+    //idea here is we use our offset value to create
+    //that many encrypted bytes as a padding
+
+    n = size;
+    *(buf+1) =0;
+    pad = securerand(size);
+
+    p = pad;
+    while(n--){
+        unencrypted = *p++;
+        encrypted = unencrypted ^ rc4byte(rc4);
+        *buf = encrypted;
+
+        x = write(fd, (char *)buf, 1);
+        assert(x == 1);
+    }
+    
+    free(pad);
+
+
     return;
 }
 
 void addheader(Arcfour *rc4,int fd, int8 *key,int16 size) {
+    int16 *offset;
+    int8 b[2], p[3];
+    int n;
+
+    //so offset is a 2 byte/16 bit number
+    //its used to determine padding size
+    //b has our 2 raw bytes of the offset
+    //p has encrypted version of b
+
+    //this just 0s out incase
+    *b=*(b+1) = 0;
+    *p=*(p+1)=*(p+2) = 0;
+
+    //generate 2 byte offset and make sure its not 0
+    offset = rndsecure16();
+    assert(*offset > 0);
+
+    //since we can only encrypt a byte at a time
+    //we use b to split offset into our 2 bytes
+    *b =     (*offset >> 8);
+    *(b+1) = (*offset & 0x00FF);
+    
+    //then we encrypt them
+    *p = rc4byte(rc4) ^ *b;
+    *(p+1) = rc4byte(rc4) ^ *(b+1);
+    *(p+2) = 0;
+
+    n = write(fd, (char *)p, 2);
+    assert(n == 2);
+
+    //then we make our padding and hash the key!
+    padding(rc4, fd, *offset);
+    keyhash(rc4, fd, key, size);
+    free(offset);
+
     return;
 }
 
-void decryptfile(Arcfour *rc4, int outfd, int infd) {
-    return;
+void encrypt(Arcfour *rc4, int outfd, int infd) {
+    int8 in_byte, out_byte;
+    ssize_t n;
+
+    while ((n = read(infd, &in_byte, 1)) == 1) {
+        out_byte = in_byte ^ rc4byte(rc4);
+        if (write(outfd, &out_byte, 1) != 1) {
+            perror("write");
+            exit(1);
+        }
+    }
+
+    if (n < 0) {
+        perror("read");
+        exit(1);
+    }
 }
 
 int main(int argc, char *argv[]){
@@ -259,7 +362,7 @@ int main(int argc, char *argv[]){
 
 
     //encrypt it!
-    printf("Beginning encryption...",infile,outfile); F;
+    printf("Beginning encryption: %s -> %s\n", infile, outfile);
     encryptfile(rc4, outfd, infd, key, size);
 
     close(infd);
