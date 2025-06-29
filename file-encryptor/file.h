@@ -13,8 +13,9 @@
 #include "../arcfour/arcfour.h"
 
 #define encryptfile(x,y,z,a,b)  \
-    addheader(x,y,a,b);         \
-    encrypt(x,y,z)
+    addheader(x,z,a,b);         \
+    encrypting(x,y,z)
+
 #define min(x,y)  (y<x ? y:x)
 #define max(x,y)  (y>x ? y:x)
 #define true 1
@@ -25,14 +26,16 @@ typedef unsigned short int int16;
 typedef unsigned char int8;
 typedef unsigned char bool;
 
-bool echo(bool);
-int8 *readline(const char*);
+void changeecho(bool);
+int8 *readkey(const char*);
 bool verify(Arcfour*,int,int8*,int16);
 void wipe(int8*,int16);
 int16 *rndsecure16(void);
+int16 getoffset(Arcfour*, int);
 int8 *rndsecure8x(int16);
 int8 *sha256(int8*,int16);
 void addheader(Arcfour*,int,int8*,int16);
 void padding(Arcfour*,int,int16);
+void parsepadding(Arcfour*,int,int16);
 void keyhash(Arcfour*,int,int8*,int16);
-void encrypt(Arcfour*,int,int);
+void encrypting(Arcfour*,int,int);

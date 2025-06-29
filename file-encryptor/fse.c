@@ -275,6 +275,7 @@ void addheader(Arcfour *rc4,int fd, int8 *key,int16 size) {
     n = write(fd, (char *)p, 2);
     assert(n == 2);
 
+    printf("Offset: %u\n", *offset);
     //then we make our padding and hash the key!
     padding(rc4, fd, *offset);
     keyhash(rc4, fd, key, size);
@@ -283,13 +284,16 @@ void addheader(Arcfour *rc4,int fd, int8 *key,int16 size) {
     return;
 }
 
-void encrypt(Arcfour *rc4, int outfd, int infd) {
-    int8 in_byte, out_byte;
+void encrypting(Arcfour *rc4, int infd, int outfd) {
+    int8 *inbyte, *outbyte;
     ssize_t n;
+    
+    inbyte = malloc(1);
+    outbyte = malloc(1);
 
-    while ((n = read(infd, &in_byte, 1)) == 1) {
-        out_byte = in_byte ^ rc4byte(rc4);
-        if (write(outfd, &out_byte, 1) != 1) {
+    while ((n = read(infd, inbyte, 1)) == 1) {
+        *outbyte = *inbyte ^ rc4byte(rc4);
+        if (write(outfd, outbyte, 1) != 1) {
             perror("write");
             exit(1);
         }
@@ -299,6 +303,9 @@ void encrypt(Arcfour *rc4, int outfd, int infd) {
         perror("read");
         exit(1);
     }
+    
+    free(inbyte);
+    free(outbyte);
 }
 
 int main(int argc, char *argv[]){
@@ -363,7 +370,7 @@ int main(int argc, char *argv[]){
 
     //encrypt it!
     printf("Beginning encryption: %s -> %s\n", infile, outfile);
-    encryptfile(rc4, outfd, infd, key, size);
+    encryptfile(rc4, infd, outfd, key, size);
 
     close(infd);
     close(outfd);
