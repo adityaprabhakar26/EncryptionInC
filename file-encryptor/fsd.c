@@ -124,20 +124,95 @@ void parsepadding(Arcfour *rc4, int outfd, int16 offset) {
     free(tempbuf);
 }
 
+int8 *sha256(int8* data,int16 size){
+    SHA256_CTX *ctx;
+    int8 *buf;
+
+    ctx = malloc(sizeof(SHA256_CTX));
+    //256 bits so we allocate 32 bytes
+    buf = malloc(32);
+    assert(ctx && buf);
+
+    memset(buf,0,32);
+    SHA256_Init(ctx);
+    SHA256_Update(ctx, data, size);
+    SHA256_Final(buf, ctx);
+    free(ctx);
+
+    return buf;
+}
 
 bool verify(Arcfour *rc4, int outfd,int8 *key, int16 size){
     int16 offset;
-    
+    int8 *hashedkeyfile;
+    int8 *userkeyhash;
+    int n;
+
+    //get the offset from the first 2 bytes
     offset = getoffset(rc4, outfd);
     if (offset<=0) {
         fprintf(stderr, "Failed to get offset or invalid key\n");
         return false;
     }
 
+    //decrypt padding just to match cipher internal state
     parsepadding(rc4,outfd,offset);
 
-    
+    //get key hash from next 32 bytes and compare with hash
+    hashedkeyfile = malloc(32);
+    if(!hashedkeyfile){
+        perror("malloc issue");
+        exit(1);
+    }
+    //reading the hashed key
+    n = read(outfd, hashedkeyfile, 32);
+    if(n!= 32){
+        perror("didnt read full key hash");
+        free(hashedkeyfile);
+        exit(1);
+    }
+    //decrypting the hashed key
+    for (int i = 0; i < 32; i++) {
+        hashedkeyfile[i] = hashedkeyfile[i] ^ rc4byte(rc4);
+    }
 
+    userkeyhash = sha256(key,size);
+    if (!userkeyhash) {
+        perror("sha256 failed");
+        free(hashedkeyfile);
+        return false;
+    }
+
+    bool valid = (memcmp(userkeyhash, hashedkeyfile, 32) == 0);
+
+    free(userkeyhash);
+    free(hashedkeyfile);
+    return valid;
+
+}
+
+void encrypting(Arcfour *rc4, int outfd, int decfd) {
+    int8 *outbyte, *decbyte;
+    ssize_t n;
+    
+    outbyte = malloc(1);
+    decbyte = malloc(1);
+
+    while ((n = read(outfd, outbyte, 1)) == 1) {
+        *decbyte = *outbyte ^ rc4byte(rc4);
+        if (write(decfd, decbyte, 1) != 1) {
+            perror("write");
+            exit(1);
+        }
+    }
+
+    if (n < 0) {
+        perror("read");
+        exit(1);
+    }
+    
+    free(outbyte);
+    free(decbyte);
 }
 
 
@@ -204,21 +279,24 @@ int main(int argc, char *argv[]){
     valid = verify(rc4, outfd, key, size);
 
     if(!valid){
-        printf("%s",valid);
-        printf("Key not valid%s",key);
+        printf("Key not valid. %s","Try again!");
+        close(outfd);
+        close(decfd);
+        rc4uninit(rc4);
+        wipe(key,size);
+        free(key);
         return -1;
     }
 
-    /*
-    //encrypt it!
+    //since rc4 is nicely symmetric, we can just re-encrypt to decrypt
     printf("Beginning decryption: %s -> %s\n", outfile, decryptedfile);
-    decryptfile(rc4, outfd, decryptedfile, key, size);
-
+    encrypting(rc4,outfd,decfd);
+    
     close(outfd);
     close(decfd);
     rc4uninit(rc4);
     wipe(key,size);
     free(key);
-    */
+
     return 0;
 }

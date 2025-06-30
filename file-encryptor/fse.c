@@ -275,7 +275,6 @@ void addheader(Arcfour *rc4,int fd, int8 *key,int16 size) {
     n = write(fd, (char *)p, 2);
     assert(n == 2);
 
-    printf("Offset: %u\n", *offset);
     //then we make our padding and hash the key!
     padding(rc4, fd, *offset);
     keyhash(rc4, fd, key, size);
