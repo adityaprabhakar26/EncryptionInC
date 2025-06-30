@@ -1,5 +1,15 @@
 {
   "files.associations": {
-    "fcntl.h": "c"
+    "fcntl.h": "c",
+    "__locale": "cpp",
+    "bitset": "cpp",
+    "memory": "cpp",
+    "optional": "cpp",
+    "string": "cpp",
+    "string_view": "cpp",
+    "variant": "cpp",
+    "vector": "cpp",
+    "random.h": "c",
+    "file.h": "c"
   }
 }
